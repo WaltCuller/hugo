@@ -21,10 +21,9 @@ import (
 	"testing"
 	"time"
 
+	qt "github.com/frankban/quicktest"
 	"github.com/gohugoio/hugo/htesting/hqt"
 	"github.com/google/go-cmp/cmp"
-
-	qt "github.com/frankban/quicktest"
 )
 
 func TestExif(t *testing.T) {
@@ -133,3 +132,93 @@ var eq = qt.CmpEquals(
 		return v1.Unix() == v2.Unix()
 	}),
 )
+
+func TestName(t *testing.T) {
+
+	c := qt.New(t)
+
+	testFunc := func(path, include string) any {
+		f, err := os.Open(filepath.FromSlash(path))
+		c.Assert(err, qt.IsNil)
+		defer f.Close()
+
+		d, err := NewDecoder(IncludeFields(include))
+		c.Assert(err, qt.IsNil)
+		x, err := d.Decode(f)
+		c.Assert(err, qt.IsNil)
+
+		// Verify that it survives a round-trip to JSON and back.
+		data, err := json.Marshal(x)
+		c.Assert(err, qt.IsNil)
+		x2 := &ExifInfo{}
+		err = json.Unmarshal(data, x2)
+
+		c.Assert(x2, eq, x)
+
+		v, found := x.Tags["ExposureTime"]
+		c.Assert(found, qt.Equals, true)
+		return v
+	}
+
+	type args struct {
+		path    string // imagePath
+		include string // includeFields
+	}
+
+	type want struct {
+		vN int64 // numerator
+		vD int64 // denominator
+	}
+
+	type testCase struct {
+		name string
+		args args
+		want want
+	}
+
+	tests := []testCase{
+		{
+			"NEF in rat", args{
+				path:    "../../testdata/5555.nef",
+				include: "Lens|Date|ExposureTime",
+			}, want{
+				1,
+				640,
+			},
+		},
+		{
+			"NEF in float", args{
+				path:    "../../testdata/9999.nef",
+				include: "Lens|Date|ExposureTime",
+			}, want{
+				30,
+				0,
+			},
+		},
+		{
+			"CR2 in rat", args{
+				path:    "../../testdata/3333.cr2",
+				include: "Lens|Date|ExposureTime",
+			}, want{
+				1,
+				500,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		c.Run(tt.name, func(c *qt.C) {
+			got := testFunc(tt.args.path, tt.args.include)
+			switch got.(type) {
+			case float64:
+				eTime, ok := got.(float64)
+				c.Assert(ok, qt.Equals, true)
+				c.Assert(eTime, qt.Equals, float64(tt.want.vN))
+			case *big.Rat:
+				eTime, ok := got.(*big.Rat)
+				c.Assert(ok, qt.Equals, true)
+				c.Assert(eTime.Cmp(big.NewRat(tt.want.vN, tt.want.vD)) == 0, qt.Equals, true)
+			}
+		})
+	}
+}
