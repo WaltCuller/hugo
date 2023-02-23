@@ -133,7 +133,7 @@ var eq = qt.CmpEquals(
 	}),
 )
 
-func TestName(t *testing.T) {
+func TestIssue10738(t *testing.T) {
 
 	c := qt.New(t)
 
@@ -178,8 +178,80 @@ func TestName(t *testing.T) {
 
 	tests := []testCase{
 		{
-			"NEF in rat", args{
-				path:    "../../testdata/5555.nef",
+			"canon_cr2_fraction", args{
+				path:    "../../testdata/issue10738/canon_cr2_fraction.jpg",
+				include: "Lens|Date|ExposureTime",
+			}, want{
+				1,
+				500,
+			},
+		},
+		{
+			"canon_cr2_integer", args{
+				path:    "../../testdata/issue10738/canon_cr2_integer.jpg",
+				include: "Lens|Date|ExposureTime",
+			}, want{
+				10,
+				0,
+			},
+		},
+		{
+			"dji_dng_fraction", args{
+				path:    "../../testdata/issue10738/dji_dng_fraction.jpg",
+				include: "Lens|Date|ExposureTime",
+			}, want{
+				1,
+				4000,
+			},
+		},
+		{
+			"fuji_raf_fraction", args{
+				path:    "../../testdata/issue10738/fuji_raf_fraction.jpg",
+				include: "Lens|Date|ExposureTime",
+			}, want{
+				1,
+				250,
+			},
+		},
+		{
+			"fuji_raf_integer", args{
+				path:    "../../testdata/issue10738/fuji_raf_integer.jpg",
+				include: "Lens|Date|ExposureTime",
+			}, want{
+				1,
+				0,
+			},
+		},
+		{
+			"leica_dng_fraction", args{
+				path:    "../../testdata/issue10738/leica_dng_fraction.jpg",
+				include: "Lens|Date|ExposureTime",
+			}, want{
+				1,
+				100,
+			},
+		},
+		{
+			"lumix_rw2_fraction", args{
+				path:    "../../testdata/issue10738/lumix_rw2_fraction.jpg",
+				include: "Lens|Date|ExposureTime",
+			}, want{
+				1,
+				400,
+			},
+		},
+		{
+			"nikon_nef_d5600", args{
+				path:    "../../testdata/issue10738/nikon_nef_d5600.jpg",
+				include: "Lens|Date|ExposureTime",
+			}, want{
+				1,
+				1000,
+			},
+		},
+		{
+			"nikon_nef_fraction", args{
+				path:    "../../testdata/issue10738/nikon_nef_fraction.jpg",
 				include: "Lens|Date|ExposureTime",
 			}, want{
 				1,
@@ -187,8 +259,8 @@ func TestName(t *testing.T) {
 			},
 		},
 		{
-			"NEF in float", args{
-				path:    "../../testdata/9999.nef",
+			"nikon_nef_integer", args{
+				path:    "../../testdata/issue10738/nikon_nef_integer.jpg",
 				include: "Lens|Date|ExposureTime",
 			}, want{
 				30,
@@ -196,12 +268,30 @@ func TestName(t *testing.T) {
 			},
 		},
 		{
-			"CR2 in rat", args{
-				path:    "../../testdata/3333.cr2",
+			"nikon_nef_fraction_2", args{
+				path:    "../../testdata/issue10738/nikon_nef_fraction_2.jpg",
 				include: "Lens|Date|ExposureTime",
 			}, want{
 				1,
-				500,
+				6400,
+			},
+		},
+		{
+			"sony_arw_fraction", args{
+				path:    "../../testdata/issue10738/sony_arw_fraction.jpg",
+				include: "Lens|Date|ExposureTime",
+			}, want{
+				1,
+				160,
+			},
+		},
+		{
+			"sony_arw_integer", args{
+				path:    "../../testdata/issue10738/sony_arw_integer.jpg",
+				include: "Lens|Date|ExposureTime",
+			}, want{
+				4,
+				0,
 			},
 		},
 	}
@@ -217,7 +307,7 @@ func TestName(t *testing.T) {
 			case *big.Rat:
 				eTime, ok := got.(*big.Rat)
 				c.Assert(ok, qt.Equals, true)
-				c.Assert(eTime.Cmp(big.NewRat(tt.want.vN, tt.want.vD)) == 0, qt.Equals, true)
+				c.Assert(eTime, eq, big.NewRat(tt.want.vN, tt.want.vD))
 			}
 		})
 	}
